@@ -40,7 +40,13 @@ document.addEventListener("DOMContentLoaded", () => {
       contrast: "medio",
       bodyShape: "hourglass",
       hasImage: false,
-      imageSrc: null
+      imageSrc: null,
+      hairline: 20,
+      browline: 42,
+      noseline: 68,
+      chinline: 90,
+      landmarks: null,
+      hasRunning3DLoop: false
     },
     colorimetry: {
       undertone: "Neutro",
@@ -410,17 +416,68 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById(id).addEventListener("input", saveClientFormToState);
   });
 
-  // --- 5. VISAGISM BIOMETRIC SCANNER (PORTRAIT LOADER) ---
+  // --- 5. VISAGISM BIOMETRIC SCANNER (PORTRAIT LOADER) & AI INTEGRATION ---
   const dropZone = document.getElementById("drop-zone");
   const imageUploader = document.getElementById("image-uploader");
   const uploadPlaceholder = document.getElementById("upload-placeholder-content");
   const scannerWrapper = document.getElementById("scanner-wrapper");
   const scanBar = document.getElementById("scan-bar");
   const visagismCanvas = document.getElementById("visagism-canvas");
+  const mesh3dCanvas = document.getElementById("mesh-3d-canvas");
   const metricsPanel = document.getElementById("metrics-panel");
   const btnRunColorimetry = document.getElementById("btn-run-colorimetry");
 
+  // Face-Thirds Sliders
+  const sliderHair = document.getElementById("slider-hairline");
+  const sliderBrow = document.getElementById("slider-browline");
+  const sliderNose = document.getElementById("slider-noseline");
+  const sliderChin = document.getElementById("slider-chinline");
+  const chkAutoSpin = document.getElementById("chk-auto-spin");
+
+  const mCtx = mesh3dCanvas.getContext("2d");
   let uploadImageInstance = null;
+
+  // 3D Projection state
+  let rotateAngle = 0;
+  let pitchAngle = 0.1;
+  let isAutoSpin = true;
+  let isDragging3D = false;
+  let prevMouseX = 0;
+  let prevMouseY = 0;
+
+  // MediaPipe AI State
+  let faceMeshInstance = null;
+  let isAiModelLoaded = false;
+
+  function initFaceMeshAI() {
+    if (typeof window.FaceMesh === "undefined") {
+      console.warn("MediaPipe FaceMesh scripts not loaded yet. Retrying in 1s...");
+      setTimeout(initFaceMeshAI, 1000);
+      return;
+    }
+    
+    try {
+      faceMeshInstance = new window.FaceMesh({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+      });
+      
+      faceMeshInstance.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+      
+      faceMeshInstance.onResults(onFaceMeshResults);
+      isAiModelLoaded = true;
+      console.log("MediaPipe FaceMesh AI successfully initialized!");
+    } catch (err) {
+      console.error("Failed to initialize MediaPipe FaceMesh:", err);
+    }
+  }
+
+  // Run AI init immediately
+  initFaceMeshAI();
 
   // Drag and drop handlers
   dropZone.addEventListener("dragover", (e) => {
@@ -502,13 +559,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function triggerBiometricScan() {
     const ctx = visagismCanvas.getContext("2d");
-    let scanLine = 0;
     let scanActive = true;
 
     // Pulse the metrics panel active
     metricsPanel.classList.add("active");
     btnRunColorimetry.removeAttribute("disabled");
 
+    // Standard high-tech 2D scanning line
     function drawScanOverlay() {
       if (!scanActive) return;
       
@@ -516,58 +573,426 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.clearRect(0, 0, visagismCanvas.width, visagismCanvas.height);
       ctx.drawImage(uploadImageInstance, 0, 0, visagismCanvas.width, visagismCanvas.height);
       
-      // Draw technical grid lines overlay
-      ctx.strokeStyle = "rgba(214, 162, 154, 0.35)";
+      // Draw technical scanning laser lines
+      ctx.strokeStyle = "rgba(214, 162, 154, 0.4)";
       ctx.lineWidth = 1;
       
-      // Facial symmetry vertical line
       ctx.beginPath();
       ctx.moveTo(visagismCanvas.width / 2, 0);
       ctx.lineTo(visagismCanvas.width / 2, visagismCanvas.height);
       ctx.stroke();
       
-      // Eyes axis horizontal line (around 42% height)
       ctx.beginPath();
-      ctx.moveTo(0, visagismCanvas.height * 0.42);
-      ctx.lineTo(visagismCanvas.width, visagismCanvas.height * 0.42);
+      ctx.moveTo(0, visagismCanvas.height * 0.45);
+      ctx.lineTo(visagismCanvas.width, visagismCanvas.height * 0.45);
       ctx.stroke();
-
-      // Lips axis horizontal line (around 68% height)
-      ctx.beginPath();
-      ctx.moveTo(0, visagismCanvas.height * 0.68);
-      ctx.lineTo(visagismCanvas.width, visagismCanvas.height * 0.68);
-      ctx.stroke();
-
-      // Facial oval bounds box
-      ctx.strokeStyle = "rgba(214, 162, 154, 0.2)";
-      ctx.strokeRect(visagismCanvas.width * 0.2, visagismCanvas.height * 0.15, visagismCanvas.width * 0.6, visagismCanvas.height * 0.7);
 
       requestAnimationFrame(drawScanOverlay);
     }
     
     drawScanOverlay();
 
-    // After 2.5 seconds, shut down laser scrolling bar
-    setTimeout(() => {
+    // Trigger MediaPipe face detection or run fallback
+    if (faceMeshInstance && isAiModelLoaded) {
+      console.log("Sending image to MediaPipe FaceMesh AI model...");
+      faceMeshInstance.send({ image: uploadImageInstance }).catch(err => {
+        console.error("AI execution error, running fallback:", err);
+        runFallbackScanner();
+      });
+    } else {
+      console.warn("AI Model not ready, running classical visagism fallback scanner...");
+      setTimeout(runFallbackScanner, 2000);
+    }
+
+    function runFallbackScanner() {
       scanBar.style.display = "none";
       scanActive = false;
       
-      // Redraw pristine image + static facial oval overlay helper
-      ctx.clearRect(0, 0, visagismCanvas.width, visagismCanvas.height);
-      ctx.drawImage(uploadImageInstance, 0, 0, visagismCanvas.width, visagismCanvas.height);
+      state.visagism.landmarks = null;
+      draw2dFaceMeshOverlay();
+      updateVisagismHud();
+      updateVisagismAdvice();
+    }
+  }
+
+  // --- AI callback: MediaPipe Face Mesh Results processor ---
+  function onFaceMeshResults(results) {
+    if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+      console.log("MediaPipe FaceMesh successfully mapped 468 landmarks!");
+      state.visagism.landmarks = results.multiFaceLandmarks[0];
       
+      // Automatically calibrate sliders based on exact coordinates of face features!
+      const landmarks = state.visagism.landmarks;
+      const topY = Math.round(landmarks[10].y * 100);    // forehead top Y
+      const browY = Math.round(landmarks[8].y * 100);     // eyebrows Y
+      const noseY = Math.round(landmarks[4].y * 100);     // nose tip Y
+      const chinY = Math.round(landmarks[152].y * 100);   // chin Y
+      
+      // Set to state with safe margins
+      state.visagism.hairline = Math.max(5, Math.min(topY, 40));
+      state.visagism.browline = Math.max(30, Math.min(browY, 60));
+      state.visagism.noseline = Math.max(55, Math.min(noseY, 80));
+      state.visagism.chinline = Math.max(80, Math.min(chinY, 98));
+      
+      // Sync sliders positions
+      sliderHair.value = state.visagism.hairline;
+      sliderBrow.value = state.visagism.browline;
+      sliderNose.value = state.visagism.noseline;
+      sliderChin.value = state.visagism.chinline;
+      
+      // AI automated facial shape detection logic!
+      const faceHeight = Math.abs(landmarks[152].y - landmarks[10].y);
+      const faceWidth = Math.abs(landmarks[454].x - landmarks[234].x); // cheeks bounds width
+      const ratio = faceHeight > 0 ? (faceWidth / faceHeight) : 0.75;
+      
+      let detectedShape = "oval";
+      if (ratio > 0.86) {
+        detectedShape = "round";
+      } else if (ratio < 0.73) {
+        detectedShape = "rectangular";
+      } else {
+        // Evaluate chin angularity index from jaw coordinates
+        const jawWidth = Math.abs(landmarks[397].x - landmarks[172].x);
+        const jawRatio = faceWidth > 0 ? (jawWidth / faceWidth) : 0.8;
+        
+        if (jawRatio > 0.85) {
+          detectedShape = "square";
+        } else if (jawRatio < 0.71) {
+          detectedShape = "heart";
+        } else {
+          detectedShape = "oval";
+        }
+      }
+      
+      console.log(`AI facial shape evaluation completed. Ratio: ${ratio.toFixed(2)}, Shape resolved: ${detectedShape}`);
+      
+      // Sync face shape selector
+      document.getElementById("face-shape-select").value = detectedShape;
+      state.visagism.faceShape = detectedShape;
+    }
+    
+    // Shut down laser bar
+    scanBar.style.display = "none";
+    
+    // Trigger redraws and HUD calculations
+    draw2dFaceMeshOverlay();
+    updateVisagismHud();
+    updateVisagismAdvice();
+    
+    // Start 3D mesh rendering loop if not already running
+    if (!state.visagism.hasRunning3DLoop) {
+      state.visagism.hasRunning3DLoop = true;
+      draw3dMesh();
+    }
+  }
+
+  // --- HTML5 Canvas rendering loop for rotating 3D face mesh ---
+  function draw3dMesh() {
+    if (!state.visagism.landmarks) return;
+    
+    mCtx.clearRect(0, 0, mesh3dCanvas.width, mesh3dCanvas.height);
+    
+    if (isAutoSpin) {
+      rotateAngle += 0.015;
+    }
+    
+    const cx = mesh3dCanvas.width / 2;
+    const cy = mesh3dCanvas.height / 2;
+    
+    // Projection variables
+    const scale = 230; 
+    const focal = 180;
+    
+    // Calculate centroids to center model
+    let sumX = 0, sumY = 0, sumZ = 0;
+    const landmarks = state.visagism.landmarks;
+    landmarks.forEach(l => {
+      sumX += l.x;
+      sumY += l.y;
+      sumZ += l.z;
+    });
+    const avgX = sumX / landmarks.length;
+    const avgY = sumY / landmarks.length;
+    const avgZ = sumZ / landmarks.length;
+    
+    // Rotate and project all 468 vertices
+    const projectedPoints = landmarks.map(l => {
+      const dx = l.x - avgX;
+      const dy = l.y - avgY;
+      const dz = l.z - avgZ;
+      
+      // Y-axis rotation (Yaw)
+      let x1 = dx * Math.cos(rotateAngle) - dz * Math.sin(rotateAngle);
+      let z1 = dx * Math.sin(rotateAngle) + dz * Math.cos(rotateAngle);
+      
+      // X-axis rotation (Pitch)
+      let y1 = dy * Math.cos(pitchAngle) - z1 * Math.sin(pitchAngle);
+      let z2 = dy * Math.sin(pitchAngle) + z1 * Math.cos(pitchAngle);
+      
+      const zOffset = 1.0;
+      const projX = cx + (x1 * scale) / (z2 + zOffset);
+      const projY = cy + (y1 * scale) / (z2 + zOffset);
+      
+      return { x: projX, y: projY, z: z2 };
+    });
+    
+    // Landmark index groups to trace features
+    const jawline = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
+    const lipsOuter = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185];
+    const leftEye = [33, 160, 158, 133, 153, 144, 33];
+    const rightEye = [362, 385, 387, 263, 373, 380, 362];
+    const nose = [168, 6, 197, 195, 5, 4, 1, 19, 94, 2];
+    
+    mCtx.strokeStyle = "rgba(214, 162, 154, 0.4)";
+    mCtx.lineWidth = 1;
+    
+    function drawPath3d(indices) {
+      mCtx.beginPath();
+      indices.forEach((idx, i) => {
+        const pt = projectedPoints[idx];
+        if (pt) {
+          if (i === 0) mCtx.moveTo(pt.x, pt.y);
+          else mCtx.lineTo(pt.x, pt.y);
+        }
+      });
+      mCtx.stroke();
+    }
+    
+    drawPath3d(jawline);
+    drawPath3d(lipsOuter);
+    drawPath3d(leftEye);
+    drawPath3d(rightEye);
+    drawPath3d(nose);
+    
+    // Draw all points as tiny glowing dots (only front facing vertices)
+    mCtx.fillStyle = "rgba(214, 162, 154, 0.75)";
+    projectedPoints.forEach((pt) => {
+      if (pt.z < 0.16) {
+        mCtx.beginPath();
+        mCtx.arc(pt.x, pt.y, 1.2, 0, 2 * Math.PI);
+        mCtx.fill();
+      }
+    });
+    
+    requestAnimationFrame(draw3dMesh);
+  }
+
+  // Click and drag rotation handlers for 3D Viewport canvas
+  mesh3dCanvas.addEventListener("mousedown", (e) => {
+    isDragging3D = true;
+    prevMouseX = e.clientX;
+    prevMouseY = e.clientY;
+    isAutoSpin = false;
+    chkAutoSpin.checked = false;
+  });
+  
+  window.addEventListener("mouseup", () => {
+    isDragging3D = false;
+  });
+  
+  mesh3dCanvas.addEventListener("mousemove", (e) => {
+    if (!isDragging3D) return;
+    const rect = mesh3dCanvas.getBoundingClientRect();
+    const deltaX = e.clientX - prevMouseX;
+    const deltaY = e.clientY - prevMouseY;
+    
+    rotateAngle += deltaX * 0.01;
+    pitchAngle = Math.max(-Math.PI/3, Math.min(Math.PI/3, pitchAngle + deltaY * 0.01));
+    
+    prevMouseX = e.clientX;
+    prevMouseY = e.clientY;
+    
+    const yawDeg = Math.round((rotateAngle * 180 / Math.PI) % 360);
+    const pitchDeg = Math.round(pitchAngle * 180 / Math.PI);
+    document.getElementById("hud-angle").textContent = `Y:${yawDeg}º | P:${pitchDeg}º`;
+  });
+
+  // --- Glowing 2D canvas overlay tracing face contour & horizontal thirds ---
+  function draw2dFaceMeshOverlay() {
+    if (!state.visagism.hasImage || !uploadImageInstance) return;
+    
+    const ctx = visagismCanvas.getContext("2d");
+    ctx.clearRect(0, 0, visagismCanvas.width, visagismCanvas.height);
+    ctx.drawImage(uploadImageInstance, 0, 0, visagismCanvas.width, visagismCanvas.height);
+    
+    if (state.visagism.landmarks) {
+      const landmarks = state.visagism.landmarks;
+      
+      ctx.strokeStyle = "rgba(214, 162, 154, 0.4)";
+      ctx.lineWidth = 1;
+      
+      const jawline = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
+      const lipsOuter = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185];
+      const leftEye = [33, 160, 158, 133, 153, 144, 33];
+      const rightEye = [362, 385, 387, 263, 373, 380, 362];
+      const nose = [168, 6, 197, 195, 5, 4, 1, 19, 94, 2];
+      
+      function drawPath2d(indices) {
+        ctx.beginPath();
+        indices.forEach((idx, i) => {
+          const l = landmarks[idx];
+          if (l) {
+            const x = l.x * visagismCanvas.width;
+            const y = l.y * visagismCanvas.height;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+      }
+      
+      drawPath2d(jawline);
+      drawPath2d(lipsOuter);
+      drawPath2d(leftEye);
+      drawPath2d(rightEye);
+      drawPath2d(nose);
+      
+      // Render small glowing vertex points for luxury biometric HUD feel
+      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+      landmarks.forEach((l, i) => {
+        if (i % 2 === 0) {
+          const x = l.x * visagismCanvas.width;
+          const y = l.y * visagismCanvas.height;
+          ctx.beginPath();
+          ctx.arc(x, y, 1.0, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+      });
+    } else {
+      // Draw aesthetic generic oval shape before AI resolves face mesh
       ctx.strokeStyle = "rgba(214, 162, 154, 0.5)";
       ctx.lineWidth = 1.5;
-      
-      // Aesthetic oval shape to frame the scanned face beautifully
       ctx.beginPath();
       ctx.ellipse(visagismCanvas.width / 2, visagismCanvas.height * 0.5, visagismCanvas.width * 0.28, visagismCanvas.height * 0.38, 0, 0, 2 * Math.PI);
       ctx.stroke();
+    }
+    
+    // Draw Face-Thirds Horizontal Guidelines with glowing backgrounds
+    const hHair = (state.visagism.hairline / 100) * visagismCanvas.height;
+    const hBrow = (state.visagism.browline / 100) * visagismCanvas.height;
+    const hNose = (state.visagism.noseline / 100) * visagismCanvas.height;
+    const hChin = (state.visagism.chinline / 100) * visagismCanvas.height;
+    
+    ctx.lineWidth = 1;
+    ctx.font = "bold 9px Manrope, sans-serif";
+    ctx.textBaseline = "middle";
+    
+    function drawHudLine(y, labelColor, labelText) {
+      ctx.strokeStyle = "rgba(214, 162, 154, 0.6)";
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(visagismCanvas.width, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
       
-      // Trigger default recommendations
-      updateVisagismAdvice();
-    }, 2500);
+      const txtWidth = ctx.measureText(labelText).width;
+      ctx.fillStyle = "rgba(18, 16, 15, 0.75)";
+      ctx.fillRect(8, y - 6, txtWidth + 10, 12);
+      
+      ctx.fillStyle = labelColor;
+      ctx.fillText(labelText, 13, y);
+    }
+    
+    drawHudLine(hHair, "#d6a29a", "T. SUPERIOR (TESTA)");
+    drawHudLine(hBrow, "#fbf9f6", "T. MÉDIO (OLHOS/CEIL)");
+    drawHudLine(hNose, "#fbf9f6", "T. INFERIOR (NARIZ)");
+    drawHudLine(hChin, "#d6a29a", "BASE FACIAL (QUEIXO)");
   }
+
+  // --- Real-time Face-Thirds calculations and HUD Updater ---
+  function recalculateFaceThirds() {
+    const hair = state.visagism.hairline;
+    const brow = state.visagism.browline;
+    const nose = state.visagism.noseline;
+    const chin = state.visagism.chinline;
+    
+    const h = chin - hair;
+    if (h <= 0) return;
+    
+    const t1 = Math.round(((brow - hair) / h) * 100);
+    const t2 = Math.round(((nose - brow) / h) * 100);
+    const t3 = Math.round(((chin - nose) / h) * 100);
+    
+    document.getElementById("visagism-thirds-ratio").textContent = `${t1}% | ${t2}% | ${t3}%`;
+    
+    document.getElementById("val-hairline").textContent = `${hair}%`;
+    document.getElementById("val-browline").textContent = `${brow}%`;
+    document.getElementById("val-noseline").textContent = `${nose}%`;
+    document.getElementById("val-chinline").textContent = `${chin}%`;
+    
+    let comment = "";
+    if (t1 > 36) {
+      comment = "Terço Superior Proeminente: Testa alta, indicando forte capacidade intelectual, analítica e reflexiva.";
+    } else if (t2 > 36) {
+      comment = "Terço Médio Proeminente: Região de olhos e nariz proeminente, sugerindo sensibilidade emocional e expressividade.";
+    } else if (t3 > 36) {
+      comment = "Terço Inferior Proeminente: Maxilar expressivo, denotando determinação, vitalidade prática e poder de execução.";
+    } else {
+      comment = "Terços Faciais Perfeitamente Equilibrados: Proporção áurea facial de alta harmonia, simetria e estabilidade.";
+    }
+    
+    document.getElementById("thirds-assessment").textContent = comment;
+  }
+
+  function updateVisagismHud() {
+    const face = state.visagism.faceShape;
+    
+    const ratioMap = {
+      oval: "1:1.5 (Proporção Áurea)",
+      round: "1:1.0 (Face Larga)",
+      square: "1:1.0 (Face Angular)",
+      rectangular: "1:1.8 (Face Alongada)",
+      heart: "1:1.3 (Face Triangular)"
+    };
+    
+    const forceMap = {
+      oval: "Curvas & Suaves",
+      round: "Curvas (Acolhimento)",
+      square: "Retas & Angulares (Força)",
+      rectangular: "Retas (Estrutura)",
+      heart: "Mistas Diagonais (Dinamismo)"
+    };
+    
+    const temperamentMap = {
+      oval: "Ar / Sanguíneo (Dinamismo)",
+      round: "Água / Fleumático (Empatia)",
+      square: "Fogo / Colérico (Foco & Ação)",
+      rectangular: "Terra / Melancólico (Refinada)",
+      heart: "Ar-Água / Dinâmico Romântico"
+    };
+    
+    document.getElementById("visagism-proportion").textContent = ratioMap[face] || "";
+    document.getElementById("visagism-force-lines").textContent = forceMap[face] || "";
+    document.getElementById("visagism-temperament").textContent = temperamentMap[face] || "";
+    
+    recalculateFaceThirds();
+  }
+
+  // Bind change listeners to sliders
+  sliderHair.addEventListener("input", () => {
+    state.visagism.hairline = parseInt(sliderHair.value);
+    draw2dFaceMeshOverlay();
+    recalculateFaceThirds();
+  });
+  sliderBrow.addEventListener("input", () => {
+    state.visagism.browline = parseInt(sliderBrow.value);
+    draw2dFaceMeshOverlay();
+    recalculateFaceThirds();
+  });
+  sliderNose.addEventListener("input", () => {
+    state.visagism.noseline = parseInt(sliderNose.value);
+    draw2dFaceMeshOverlay();
+    recalculateFaceThirds();
+  });
+  sliderChin.addEventListener("input", () => {
+    state.visagism.chinline = parseInt(sliderChin.value);
+    draw2dFaceMeshOverlay();
+    recalculateFaceThirds();
+  });
+  chkAutoSpin.addEventListener("change", () => {
+    isAutoSpin = chkAutoSpin.checked;
+  });
 
   // --- 6. VISAGISM SELECTORS & RECOMMENDATION DATABASE ---
   const genderSelect = document.getElementById("gender-select");
@@ -626,10 +1051,23 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Bind change events
-  genderSelect.addEventListener("change", updateVisagismAdvice);
-  faceShapeSelect.addEventListener("change", updateVisagismAdvice);
-  personalContrast.addEventListener("change", updateVisagismAdvice);
-  bodyShapeSelect.addEventListener("change", updateVisagismAdvice);
+  genderSelect.addEventListener("change", () => {
+    updateVisagismAdvice();
+    updateVisagismHud();
+  });
+  faceShapeSelect.addEventListener("change", () => {
+    updateVisagismAdvice();
+    updateVisagismHud();
+    draw2dFaceMeshOverlay(); // Redraw contours corresponding to selected face shape
+  });
+  personalContrast.addEventListener("change", () => {
+    updateVisagismAdvice();
+    updateVisagismHud();
+  });
+  bodyShapeSelect.addEventListener("change", () => {
+    updateVisagismAdvice();
+    updateVisagismHud();
+  });
 
 
   // --- 7. PIXEL-SAMPLING DIGITAL COLORIMETRY ENGINE ---
@@ -660,51 +1098,118 @@ document.addEventListener("DOMContentLoaded", () => {
     "Inverno Frio": "Paleta dramática, pura, fria e contrastante. Favorece tons de vermelho carmim, azul royal, esmeralda profunda, fúcsia, preto e branco puro. Transmite força, autoridade, refinamento contemporâneo e mistério."
   };
 
+  // Get pixel color at normalized coordinates
+  function getPixelColor(xNorm, yNorm) {
+    if (!uploadImageInstance || !state.visagism.hasImage) return { r: 120, g: 120, b: 120 };
+    
+    // Use the 2D canvas context
+    const tempCtx = visagismCanvas.getContext("2d");
+    const px = Math.max(0, Math.min(Math.floor(xNorm * visagismCanvas.width), visagismCanvas.width - 1));
+    const py = Math.max(0, Math.min(Math.floor(yNorm * visagismCanvas.height), visagismCanvas.height - 1));
+    
+    try {
+      const pixel = tempCtx.getImageData(px, py, 1, 1).data;
+      return { r: pixel[0], g: pixel[1], b: pixel[2] };
+    } catch (e) {
+      console.warn("Out of bounds pixel sampling, using average fallback.");
+      return { r: 180, g: 140, b: 120 };
+    }
+  }
+
+  function rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
   btnRunColorimetry.addEventListener("click", () => {
     if (!state.visagism.hasImage) return;
 
     // Show loading
     btnRunColorimetry.setAttribute("disabled", "true");
-    btnRunColorimetry.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Escaneando...';
+    btnRunColorimetry.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analisando Zonas de Pele...';
 
     setTimeout(() => {
-      // Run deterministic pixel sampling math on canvas
-      const ctx = visagismCanvas.getContext("2d");
-      const imgData = ctx.getImageData(0, 0, visagismCanvas.width, visagismCanvas.height);
-      const data = imgData.data;
-
-      // Sample a central grid (cheeks/face area where skin tones are located)
-      let totalR = 0, totalG = 0, totalB = 0, count = 0;
+      let avgR, avgG, avgB;
+      let leftCheek, rightCheek, forehead, chin, lip;
       
-      // Sample 150 points in a central grid to get average skin tones
-      const startX = Math.floor(visagismCanvas.width * 0.3);
-      const endX = Math.floor(visagismCanvas.width * 0.7);
-      const startY = Math.floor(visagismCanvas.height * 0.35);
-      const endY = Math.floor(visagismCanvas.height * 0.65);
-
-      for (let x = startX; x < endX; x += Math.floor((endX - startX) / 10)) {
-        for (let y = startY; y < endY; y += Math.floor((endY - startY) / 15)) {
-          const index = (y * visagismCanvas.width + x) * 4;
-          totalR += data[index];
-          totalG += data[index + 1];
-          totalB += data[index + 2];
-          count++;
+      const landmarks = state.visagism.landmarks;
+      if (landmarks) {
+        console.log("AI Landmarks found! Executing anatomically-guided facial colorimetry...");
+        // Sample exact pixels using MediaPipe face coordinates
+        leftCheek = getPixelColor(landmarks[116].x, landmarks[116].y);
+        rightCheek = getPixelColor(landmarks[345].x, landmarks[345].y);
+        forehead = getPixelColor(landmarks[10].x, landmarks[10].y);
+        chin = getPixelColor(landmarks[152].x, landmarks[152].y);
+        lip = getPixelColor(landmarks[13].x, landmarks[13].y);
+        
+        // Eyebrow landmark (index 105) color for personal contrast Delta calculation
+        const eyebrowColor = getPixelColor(landmarks[105].x, landmarks[105].y);
+        
+        // Average facial skin channels
+        avgR = Math.round((leftCheek.r + rightCheek.r + forehead.r) / 3);
+        avgG = Math.round((leftCheek.g + rightCheek.g + forehead.g) / 3);
+        avgB = Math.round((leftCheek.b + rightCheek.b + forehead.b) / 3);
+        
+        // Calculate contrast relative delta
+        const skinLuma = 0.299 * avgR + 0.587 * avgG + 0.114 * avgB;
+        const browLuma = 0.299 * eyebrowColor.r + 0.587 * eyebrowColor.g + 0.114 * eyebrowColor.b;
+        const deltaL = Math.abs(skinLuma - browLuma);
+        
+        let detectedContrast = "medio";
+        if (deltaL > 95) {
+          detectedContrast = "alto";
+        } else if (deltaL < 40) {
+          detectedContrast = "baixo-claro";
+        } else {
+          detectedContrast = "medio";
         }
-      }
+        
+        console.log(`AI Contrast Delta: ${deltaL.toFixed(1)}, Contrast resolved: ${detectedContrast}`);
+        personalContrast.value = detectedContrast;
+        state.visagism.contrast = detectedContrast;
+        updateVisagismAdvice();
+      } else {
+        // Fallback grid sampling if AI model is offline or has no image landmarks
+        console.warn("AI Landmarks not available. Running fallback average grid scanning...");
+        const ctx = visagismCanvas.getContext("2d");
+        const imgData = ctx.getImageData(0, 0, visagismCanvas.width, visagismCanvas.height);
+        const data = imgData.data;
 
-      const avgR = Math.round(totalR / count);
-      const avgG = Math.round(totalG / count);
-      const avgB = Math.round(totalB / count);
+        let totalR = 0, totalG = 0, totalB = 0, count = 0;
+        const startX = Math.floor(visagismCanvas.width * 0.3);
+        const endX = Math.floor(visagismCanvas.width * 0.7);
+        const startY = Math.floor(visagismCanvas.height * 0.35);
+        const endY = Math.floor(visagismCanvas.height * 0.65);
+
+        for (let x = startX; x < endX; x += Math.floor((endX - startX) / 10)) {
+          for (let y = startY; y < endY; y += Math.floor((endY - startY) / 15)) {
+            const index = (y * visagismCanvas.width + x) * 4;
+            totalR += data[index];
+            totalG += data[index + 1];
+            totalB += data[index + 2];
+            count++;
+          }
+        }
+        
+        avgR = Math.round(totalR / count);
+        avgG = Math.round(totalG / count);
+        avgB = Math.round(totalB / count);
+        
+        // Default swatches mock values around average skin tone
+        leftCheek = { r: avgR, g: avgG, b: avgB };
+        rightCheek = { r: Math.max(0, avgR - 6), g: Math.max(0, avgG - 3), b: Math.max(0, avgB - 2) };
+        forehead = { r: Math.min(255, avgR + 8), g: Math.min(255, avgG + 5), b: Math.min(255, avgB + 4) };
+        chin = { r: Math.max(0, avgR - 3), g: Math.max(0, avgG - 5), b: Math.max(0, avgB - 7) };
+      }
 
       state.colorimetry.rgbAverage = { r: avgR, g: avgG, b: avgB };
 
-      // Undertone decision rule: Skin is warm if red/green are higher relative to blue channel
+      // Subtom rule based on color temperature channels
       let undertone = "Neutro";
       const warmValue = (avgR + avgG) / 2 - avgB;
       
-      if (warmValue > 42) {
+      if (warmValue > 40) {
         undertone = "Quente (Warm)";
-      } else if (warmValue < 28) {
+      } else if (warmValue < 26) {
         undertone = "Frio (Cool)";
       } else {
         undertone = "Neutro (Neutral)";
@@ -712,33 +1217,39 @@ document.addEventListener("DOMContentLoaded", () => {
       
       state.colorimetry.undertone = undertone;
 
-      // Relative Luminance check
+      // Calculate Relative Luminance
       const luminance = (0.299 * avgR + 0.587 * avgG + 0.114 * avgB);
       state.colorimetry.luminance = Math.round(luminance);
 
-      // Seasonal Palette check
+      // seasonal palette matching
       let season = "Primavera Quente";
       if (undertone.includes("Quente") || (undertone.includes("Neutro") && avgR > avgB)) {
-        season = (luminance > 128) ? "Primavera Quente" : "Outono Escuro";
+        season = (luminance > 125) ? "Primavera Quente" : "Outono Escuro";
       } else {
-        season = (luminance > 128) ? "Verão Claro" : "Inverno Frio";
+        season = (luminance > 125) ? "Verão Claro" : "Inverno Frio";
       }
 
       state.colorimetry.season = season;
       state.colorimetry.isAnalyzed = true;
       state.colorimetry.palette = [...seasonPalettes[season]];
 
-      // Update UI elements
+      // Populate swatches DOM items
+      document.getElementById("swatch-left-cheek").style.backgroundColor = rgbToHex(leftCheek.r, leftCheek.g, leftCheek.b);
+      document.getElementById("swatch-right-cheek").style.backgroundColor = rgbToHex(rightCheek.r, rightCheek.g, rightCheek.b);
+      document.getElementById("swatch-forehead").style.backgroundColor = rgbToHex(forehead.r, forehead.g, forehead.b);
+      document.getElementById("swatch-chin").style.backgroundColor = rgbToHex(chin.r, chin.g, chin.b);
+      
+      // Update UI texts
       colorSkinUndertone.textContent = undertone;
       colorSeasonalPalette.textContent = season;
       colorWhite.textContent = `R:${avgR} G:${avgG} B:${avgB}`;
       colorLuminance.textContent = `${state.colorimetry.luminance} / 255`;
 
-      // Hide default placeholder
+      // Hide placeholder and reveal results UI
       colorimetryLoader.style.display = "none";
       colorimetryResultsUi.style.display = "block";
       
-      // Inject Swatches
+      // Inject Swatches Grid
       colorimetrySwatchesGrid.innerHTML = "";
       state.colorimetry.palette.forEach(color => {
         const swatch = document.createElement("div");
@@ -751,10 +1262,10 @@ document.addEventListener("DOMContentLoaded", () => {
       colorimetrySeasonDesc.textContent = seasonDescriptions[season];
       colorimetrySwatchesDisplay.style.display = "block";
 
-      // Reset button
+      // Re-enable button
       btnRunColorimetry.removeAttribute("disabled");
-      btnRunColorimetry.innerHTML = '<i class="fa-solid fa-check"></i> Escaneamento Concluído';
-    }, 1800);
+      btnRunColorimetry.innerHTML = '<i class="fa-solid fa-check"></i> Análise de Cromatologia Concluída';
+    }, 1500);
   });
 
   // Toggle White Balance simulation
@@ -1359,9 +1870,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <div style="margin-bottom:25px;">
         <h4 style="font-family:'Cinzel', serif; font-size:13px; color:#1c1c1c; border-bottom:1px solid #ddd; padding-bottom:5px; text-transform:uppercase; margin-bottom:12px;">2. Morfologia Facial & Visagismo</h4>
         <table style="width:100%; font-size:12px; line-height:1.8; margin-bottom:12px;">
-          <tr><td style="width:120px; font-weight:600; color:#555;">FORMATO FACIAL:</td><td style="text-transform:capitalize;">${v.faceShape}</td></tr>
+          <tr><td style="width:120px; font-weight:600; color:#555;">FORMATO FACIAL:</td><td style="text-transform:capitalize;"><strong>${v.faceShape.toUpperCase()}</strong></td></tr>
           <tr><td style="font-weight:600; color:#555;">SILHUETA:</td><td style="text-transform:capitalize;">${v.bodyShape}</td></tr>
           <tr><td style="font-weight:600; color:#555;">CONTRASTE:</td><td style="text-transform:capitalize;">${v.contrast}</td></tr>
+          <tr><td style="font-weight:600; color:#555;">TERÇOS FACIAIS:</td><td style="font-family:monospace;">Testa: ${Math.round(((v.browline - v.hairline)/Math.max(1, v.chinline - v.hairline))*100)}% | Centro: ${Math.round(((v.noseline - v.browline)/Math.max(1, v.chinline - v.hairline))*100)}% | Queixo: ${Math.round(((v.chinline - v.noseline)/Math.max(1, v.chinline - v.hairline))*100)}%</td></tr>
         </table>
         <div style="font-size:11px; background:#f5f3ef; padding:15px; border-radius:6px; color:#444; border-left:3px solid var(--rose-primary);">
           <strong>Cabelo & Penteado:</strong> ${hairAdvice[v.faceShape] || "Aguardando ajuste de seletores..."}<br><br>
@@ -1592,9 +2104,10 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="card-info">
       <h3 class="section-title">2. Estudo Morfológico Facial (Visagismo)</h3>
       <table>
-        <tr><td class="label">FORMATO FACIAL:</td><td style="text-transform: capitalize;">${v.faceShape}</td></tr>
+        <tr><td class="label">FORMATO FACIAL:</td><td style="text-transform: capitalize;"><strong>${v.faceShape.toUpperCase()}</strong></td></tr>
         <tr><td class="label">CONTRASTE PESSOAL:</td><td style="text-transform: capitalize;">${v.contrast}</td></tr>
         <tr><td class="label">SILHUETA CORPORAL:</td><td style="text-transform: capitalize;">${v.bodyShape}</td></tr>
+        <tr><td class="label">TERÇOS FACIAIS:</td><td style="font-family: monospace;">Testa: ${Math.round(((v.browline - v.hairline)/Math.max(1, v.chinline - v.hairline))*100)}% | Olhos/Nariz: ${Math.round(((v.noseline - v.browline)/Math.max(1, v.chinline - v.hairline))*100)}% | Queixo: ${Math.round(((v.chinline - v.noseline)/Math.max(1, v.chinline - v.hairline))*100)}%</td></tr>
       </table>
       <div class="desc-box">
         <p style="margin-bottom: 12px;"><strong>Cabelo & Penteado Ideal:</strong> ${hairAdvice[v.faceShape] || "Aguardando ajuste..."}</p>

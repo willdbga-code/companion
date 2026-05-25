@@ -1330,6 +1330,219 @@ button {
 }
 
 /* ==========================================================================
+   AI BIOMETRIC 3D MESH & FACE-THIRDS CUSTOM STYLING
+   ========================================================================== */
+
+/* Canvas Split Grid */
+.canvas-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.canvas-container-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.canvas-box-title {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.canvas-box-title i {
+  color: var(--rose-primary);
+}
+
+.canvas-relative {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  aspect-ratio: 1 / 1;
+}
+
+.canvas-relative canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #090808;
+  object-fit: cover;
+}
+
+/* 3D Viewport Controls Overlay */
+.mesh-3d-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(14, 13, 12, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 8;
+}
+
+.mesh-3d-controls .control-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mesh-3d-controls input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+  accent-color: var(--rose-primary);
+  cursor: pointer;
+}
+
+.hud-angle-indicator {
+  font-family: monospace;
+  font-size: 9px;
+  color: var(--rose-primary);
+  font-weight: 600;
+  text-shadow: 0 0 5px rgba(214, 162, 154, 0.3);
+}
+
+/* Biometric HUD Section Grid */
+.biometric-hud-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 25px;
+  margin-bottom: 25px;
+  width: 100%;
+}
+
+.hud-card {
+  background: rgba(214, 162, 154, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.01);
+}
+
+.hud-sub-title {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rose-light);
+  margin-bottom: 15px;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud-sub-title i {
+  color: var(--rose-primary);
+}
+
+/* Face-Thirds Sliders styling */
+.slider-group {
+  margin-bottom: 16px;
+}
+
+.slider-group:last-child {
+  margin-bottom: 0;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.slider-header label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.slider-header span {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--rose-primary);
+  font-weight: 700;
+}
+
+.gold-range {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  outline: none;
+  transition: background 0.2s ease;
+}
+
+.gold-range:focus {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.gold-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--rose-primary);
+  border: 1px solid var(--white-blossom);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(214, 162, 154, 0.5);
+  transition: transform 0.1s ease;
+}
+
+.gold-range::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+}
+
+/* Thirds assessment output box */
+.thirds-assessment-box {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(214, 162, 154, 0.03);
+  border-left: 3px solid var(--rose-primary);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  font-style: italic;
+  animation: fadeIn 0.4s ease;
+}
+
+/* ==========================================================================
    COMPANION DASHBOARD MOBILE & PORTRAIT RESPONSIVENESS OVERRIDES
    ========================================================================== */
 
@@ -1404,6 +1617,17 @@ button {
   /* Collapse grids to single columns */
   .grid-2-1,
   .grid-1-2 {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  /* Collapse Visagism biometric HUD to single column */
+  .canvas-split-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .biometric-hud-section {
     grid-template-columns: 1fr;
     gap: 20px;
   }

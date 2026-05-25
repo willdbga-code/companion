@@ -15,6 +15,11 @@
   
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- MediaPipe AI Face Mesh -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -186,10 +191,31 @@
                     <p>Arraste a foto da cliente ou clique para fazer upload</p>
                     <span>(Imagens frontais e bem iluminadas de rosto/ombros são ideais)</span>
                   </div>
-                  <!-- Canvas for Scan Overlay -->
+                  <!-- Canvas for Scan Overlay (Split View: Left 2D Mesh, Right 3D viewport) -->
                   <div class="scanner-canvas-wrapper" id="scanner-wrapper">
-                    <canvas id="visagism-canvas"></canvas>
-                    <div class="scan-bar" id="scan-bar"></div>
+                    <div class="canvas-split-grid">
+                      <!-- Left: 2D Photo with face mesh overlay -->
+                      <div class="canvas-container-box">
+                        <h5 class="canvas-box-title"><i class="fa-solid fa-camera"></i> Mapeamento Facial 2D</h5>
+                        <div class="canvas-relative">
+                          <canvas id="visagism-canvas"></canvas>
+                          <div class="scan-bar" id="scan-bar"></div>
+                        </div>
+                      </div>
+                      <!-- Right: 3D rotating mesh viewport -->
+                      <div class="canvas-container-box">
+                        <h5 class="canvas-box-title"><i class="fa-solid fa-cube"></i> Viewport 3D Malha I.A.</h5>
+                        <div class="canvas-relative">
+                          <canvas id="mesh-3d-canvas" width="220" height="220"></canvas>
+                          <div class="mesh-3d-controls">
+                            <label class="control-label">
+                              <input type="checkbox" id="chk-auto-spin" checked> Auto-Giro
+                            </label>
+                            <span class="hud-angle-indicator" id="hud-angle">3D Ativo</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -236,6 +262,73 @@
                         <option value="rectangle">Retângulo</option>
                         <option value="round">Oval / Arredondado</option>
                       </select>
+                    </div>
+                  </div>
+
+                  <!-- Face Thirds Sliders and AI Diagnostics HUD -->
+                  <div class="biometric-hud-section">
+                    <!-- Left: Sliders -->
+                    <div class="hud-card glass">
+                      <h5 class="hud-sub-title"><i class="fa-solid fa-sliders"></i> Calibração de Terços Faciais</h5>
+                      
+                      <div class="slider-group">
+                        <div class="slider-header">
+                          <label for="slider-hairline">Linha do Cabelo</label>
+                          <span id="val-hairline">20%</span>
+                        </div>
+                        <input type="range" id="slider-hairline" min="5" max="40" value="20" step="1" class="gold-range">
+                      </div>
+
+                      <div class="slider-group">
+                        <div class="slider-header">
+                          <label for="slider-browline">Linha das Sobrancelhas</label>
+                          <span id="val-browline">42%</span>
+                        </div>
+                        <input type="range" id="slider-browline" min="30" max="60" value="42" step="1" class="gold-range">
+                      </div>
+
+                      <div class="slider-group">
+                        <div class="slider-header">
+                          <label for="slider-noseline">Linha do Nariz</label>
+                          <span id="val-noseline">68%</span>
+                        </div>
+                        <input type="range" id="slider-noseline" min="55" max="80" value="68" step="1" class="gold-range">
+                      </div>
+
+                      <div class="slider-group">
+                        <div class="slider-header">
+                          <label for="slider-chinline">Linha do Queixo</label>
+                          <span id="val-chinline">90%</span>
+                        </div>
+                        <input type="range" id="slider-chinline" min="80" max="98" value="90" step="1" class="gold-range">
+                      </div>
+                    </div>
+
+                    <!-- Right: HUD Table -->
+                    <div class="hud-card glass">
+                      <h5 class="hud-sub-title"><i class="fa-solid fa-calculator"></i> Biometria & Temperamento</h5>
+                      
+                      <div class="technical-table">
+                        <div class="tech-row">
+                          <span class="tech-label">Proporção Áurea</span>
+                          <span class="tech-value rose-text" id="visagism-proportion" style="font-weight: 700;">1:1.5 (Harmônica)</span>
+                        </div>
+                        <div class="tech-row">
+                          <span class="tech-label">Linhas de Força</span>
+                          <span class="tech-value" id="visagism-force-lines">Curvas & Suaves</span>
+                        </div>
+                        <div class="tech-row">
+                          <span class="tech-label">Distribuição</span>
+                          <span class="tech-value" id="visagism-thirds-ratio" style="font-family: monospace; font-size: 11px;">30% | 34% | 36%</span>
+                        </div>
+                        <div class="tech-row">
+                          <span class="tech-label">Temperamento</span>
+                          <span class="tech-value rose-text" id="visagism-temperament" style="font-weight: 700;">Ar / Sanguíneo</span>
+                        </div>
+                      </div>
+                      <div class="thirds-assessment-box" id="thirds-assessment">
+                        Aguardando mapeamento para avaliação...
+                      </div>
                     </div>
                   </div>
                   
@@ -341,6 +434,29 @@
                         </div>
                       </div>
                       
+                      <!-- AI Zone Sampling Swatches -->
+                      <div class="anatomical-swatches-box" style="margin-top: 14px; padding: 10px; background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.03); border-radius: 8px;">
+                        <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing:0.08em; display:block; margin-bottom: 8px; font-weight:600;"><i class="fa-solid fa-eye-dropper"></i> Mapeamento de Zonas Biométricas:</span>
+                        <div class="zone-swatches-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                          <div class="zone-swatch-item" style="text-align:center;">
+                            <div class="zone-swatch" id="swatch-left-cheek" style="height:25px; border-radius:4px; border:1px solid rgba(255,255,255,0.1); margin-bottom:3px; background:#aaa; transition: background 0.3s ease;"></div>
+                            <span style="font-size:8px; color:var(--text-secondary); display:block; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">Boch. Esq</span>
+                          </div>
+                          <div class="zone-swatch-item" style="text-align:center;">
+                            <div class="zone-swatch" id="swatch-right-cheek" style="height:25px; border-radius:4px; border:1px solid rgba(255,255,255,0.1); margin-bottom:3px; background:#aaa; transition: background 0.3s ease;"></div>
+                            <span style="font-size:8px; color:var(--text-secondary); display:block; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">Boch. Dir</span>
+                          </div>
+                          <div class="zone-swatch-item" style="text-align:center;">
+                            <div class="zone-swatch" id="swatch-forehead" style="height:25px; border-radius:4px; border:1px solid rgba(255,255,255,0.1); margin-bottom:3px; background:#aaa; transition: background 0.3s ease;"></div>
+                            <span style="font-size:8px; color:var(--text-secondary); display:block; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">Testa</span>
+                          </div>
+                          <div class="zone-swatch-item" style="text-align:center;">
+                            <div class="zone-swatch" id="swatch-chin" style="height:25px; border-radius:4px; border:1px solid rgba(255,255,255,0.1); margin-bottom:3px; background:#aaa; transition: background 0.3s ease;"></div>
+                            <span style="font-size:8px; color:var(--text-secondary); display:block; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">Queixo</span>
+                          </div>
+                        </div>
+                      </div>
+
                       <!-- Toggle Visual Correction -->
                       <div style="margin-top: 14px; text-align: center;">
                         <button type="button" class="btn-secondary" id="btn-toggle-wb" style="padding: 8px 12px; font-size: 11px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 4px;">
