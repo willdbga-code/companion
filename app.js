@@ -1205,7 +1205,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
               <td style="padding: 4px 0; font-weight: bold; width: 120px;">CONTRATADA:</td>
-              <td style="padding: 4px 0;"><strong>ANNA SOUZA BEAUTY</strong>, Maquiadora e Penteadista Profissional, CNPJ nº 48.922.364/0001-40, São José dos Campos - SP.</td>
+              <td style="padding: 4px 0;"><strong>ANNA SOUZA BEAUTY</strong>, Maquiadora e Penteadista Profissional, CPF nº 324.689.330-18, Pindamonhangaba - SP.</td>
             </tr>
             <tr>
               <td style="padding: 4px 0; font-weight: bold;">CONTRATANTE:</td>
@@ -1241,7 +1241,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="sig-line" style="border-top: 1px solid #1c1c1c; text-align: center; padding-top: 8px; font-size: 11px;">
             <strong>CONTRATADA</strong><br>
             ANNA SOUZA BEAUTY<br>
-            CNPJ nº 48.922.364/0001-40
+            CPF nº 324.689.330-18
           </div>
           <div class="sig-line" style="border-top: 1px solid #1c1c1c; text-align: center; padding-top: 8px; font-size: 11px;">
             <strong>CONTRATANTE</strong><br>
