@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anna Souza | Beauty & Visagism Companion</title>
+  
+  <!-- Premium Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Background Atmospheric Glows (Premium Rose-Gold & Champagne Glow) -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- App Shell -->
+  <div class="app-shell">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <h1 class="brand-title">ANNA SOUZA</h1>
+        <p class="brand-subtitle">BEAUTY COMPANION</p>
+      </div>
+      
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="contract-tab">
+          <i class="fa-solid fa-file-signature"></i>
+          <span>Contratos & Cadastro</span>
+        </button>
+        <button class="nav-item" data-tab="moodboard-tab">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Visagismo & Cores</span>
+        </button>
+        <button class="nav-item" data-tab="lighting-tab">
+          <i class="fa-solid fa-lightbulb"></i>
+          <span>Iluminação de Beleza</span>
+        </button>
+        <button class="nav-item" data-tab="export-tab">
+          <i class="fa-solid fa-file-export"></i>
+          <span>Briefing & Exportação</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <p>Anna Souza Beauty</p>
+        <span>v1.0.0 — Visagism & Style</span>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Tab 1: Contract & Client Form -->
+      <section id="contract-tab" class="tab-pane active">
+        <div class="pane-header">
+          <h2 class="pane-title">Gestão de Contratos e Clientes</h2>
+          <p class="pane-description">Selecione o pacote e preencha os dados contratuais do cliente para o atendimento de maquiagem/penteado.</p>
+        </div>
+        
+        <div class="grid-2-1">
+          <!-- Client Form -->
+          <div class="card glass">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-solid fa-user-pen"></i> Ficha Cadastral do Cliente</h3>
+            </div>
+            <div class="card-body">
+              <form id="client-form" class="form-grid">
+                <div class="form-group col-span-2">
+                  <label for="client-name">Nome Completo do Cliente</label>
+                  <input type="text" id="client-name" required placeholder="Ex: Ana Maria de Souza">
+                </div>
+                
+                <div class="form-group">
+                  <label for="client-document">CPF / CNPJ</label>
+                  <input type="text" id="client-document" required placeholder="000.000.000-00">
+                </div>
+                
+                <div class="form-group">
+                  <label for="client-email">E-mail</label>
+                  <input type="email" id="client-email" required placeholder="ana.client@exemplo.com">
+                </div>
+                
+                <div class="form-group col-span-2">
+                  <label for="client-address">Endereço Residencial</label>
+                  <input type="text" id="client-address" required placeholder="Rua, Número, Bairro, Cidade - UF">
+                </div>
+
+                <div class="form-group">
+                  <label for="shoot-date">Data do Atendimento</label>
+                  <input type="date" id="shoot-date" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="shoot-location">Locação do Atendimento</label>
+                  <input type="text" id="shoot-location" required placeholder="Ex: Meu Estúdio ou Atendimento Externo">
+                </div>
+
+                <div class="form-group">
+                  <label for="payment-signal">Sinal para Reserva (BRL)</label>
+                  <select id="payment-signal">
+                    <option value="100">R$ 100,00 (Padrão Debutantes / Cursos)</option>
+                    <option value="200" selected>R$ 200,00 (Padrão Noivas / Coleções)</option>
+                    <option value="0">Sem sinal necessário</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="payment-installments">Parcelamento de Saldo</label>
+                  <select id="payment-installments">
+                    <option value="1">Sem juros (À vista)</option>
+                    <option value="2">Até 2x sem juros</option>
+                    <option value="3" selected>Até 3x sem juros (Recomendado)</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Package Selector -->
+          <div class="card glass flex-column justify-between">
+            <div>
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-box-archive"></i> Serviço ou Coleção</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="package-selector">Selecione o Serviço</label>
+                  <select id="package-selector" class="w-full">
+                    <!-- Loaded dynamically in app.js -->
+                  </select>
+                </div>
+                
+                <!-- Dynamic Package Summary -->
+                <div id="package-summary-card" class="package-summary-box">
+                  <div class="package-header">
+                    <h4 id="summary-title" class="rose-text">Carregando...</h4>
+                    <span id="summary-price" class="price-tag">Sob Consulta</span>
+                  </div>
+                  <p id="summary-desc" class="package-desc">Carregando...</p>
+                  <ul id="summary-features" class="package-features">
+                    <!-- Features list -->
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card-footer">
+              <button type="button" class="btn-primary w-full" id="btn-generate-contract">
+                <i class="fa-solid fa-gears"></i> Gerar Instrumento Contratual
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 2: Moodboard & Visagism -->
+      <section id="moodboard-tab" class="tab-pane">
+        <div class="pane-header">
+          <h2 class="pane-title">Visagismo e Cromatologia Digital</h2>
+          <p class="pane-description">Efetue a curadoria da paleta cromática, analise a estrutura facial da cliente e sugira cortes, maquiagens e decotes personalizados.</p>
+        </div>
+
+        <div class="grid-2-1">
+          <!-- Visagism Face Scan & Upload -->
+          <div class="card glass">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-solid fa-face-smile"></i> Analisador Visagista Facial & Morfológico</h3>
+            </div>
+            <div class="card-body">
+              <div class="visagism-container">
+                <!-- Dropzone Area -->
+                <div class="upload-zone" id="drop-zone">
+                  <input type="file" id="image-uploader" accept="image/*" class="hidden-input">
+                  <div class="upload-placeholder" id="upload-placeholder-content">
+                    <i class="fa-solid fa-camera-retro upload-icon"></i>
+                    <p>Arraste a foto da cliente ou clique para fazer upload</p>
+                    <span>(Imagens frontais e bem iluminadas de rosto/ombros são ideais)</span>
+                  </div>
+                  <!-- Canvas for Scan Overlay -->
+                  <div class="scanner-canvas-wrapper" id="scanner-wrapper">
+                    <canvas id="visagism-canvas"></canvas>
+                    <div class="scan-bar" id="scan-bar"></div>
+                  </div>
+                </div>
+
+                <!-- Technical Metrics Adjustment -->
+                <div class="metrics-dashboard" id="metrics-panel">
+                  <h4 class="rose-text"><i class="fa-solid fa-chart-simple"></i> Parâmetros de Visagismo</h4>
+                  
+                  <div class="grid-visagism">
+                    <div class="metric-item">
+                      <label>Gênero Modelo</label>
+                      <select id="gender-select">
+                        <option value="feminino" selected>Feminino</option>
+                        <option value="masculino">Masculino</option>
+                      </select>
+                    </div>
+
+                    <div class="metric-item">
+                      <label>Formato Facial</label>
+                      <select id="face-shape-select">
+                        <option value="oval">Oval (Equilíbrio Clássico)</option>
+                        <option value="round">Redondo (Suavidade & Acolhimento)</option>
+                        <option value="square">Quadrado (Força & Credibilidade)</option>
+                        <option value="rectangular">Retangular (Intelecto & Estrutura)</option>
+                        <option value="heart">Coração (Expressividade & Romantismo)</option>
+                      </select>
+                    </div>
+                    
+                    <div class="metric-item">
+                      <label>Contraste Pessoal</label>
+                      <select id="personal-contrast">
+                        <option value="baixo-escuro">Baixo Contraste Escuro</option>
+                        <option value="medio" selected>Médio Contraste</option>
+                        <option value="alto">Alto Contraste (Dramático)</option>
+                        <option value="baixo-claro">Baixo Contraste Claro</option>
+                      </select>
+                    </div>
+
+                    <div class="metric-item">
+                      <label>Morfologia Corporal</label>
+                      <select id="body-shape-select">
+                        <option value="hourglass">Ampulheta (Silhueta Harmônica)</option>
+                        <option value="triangle">Triângulo / Pêra</option>
+                        <option value="inverted-triangle">Triângulo Invertido</option>
+                        <option value="rectangle">Retângulo</option>
+                        <option value="round">Oval / Arredondado</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <!-- Visagism Results -->
+                  <div class="visagism-results-box">
+                    <div class="result-column">
+                      <h5><i class="fa-solid fa-scissors"></i> Cabelo & Penteado</h5>
+                      <p id="visagism-hair-desc">Insira a imagem ou ajuste os seletores acima para gerar as recomendações morfológicas personalizadas.</p>
+                    </div>
+                    <div class="result-column">
+                      <h5><i class="fa-solid fa-wand-magic-sparkles"></i> Maquiagem Ideal</h5>
+                      <p id="visagism-makeup-desc">Aguardando definição dos parâmetros...</p>
+                    </div>
+                    <div class="result-column">
+                      <h5><i class="fa-solid fa-shirt"></i> Vestuário & Decotes</h5>
+                      <p id="visagism-clothing-desc">Aguardando definição dos parâmetros...</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Color Wheel & Palettes -->
+          <div class="card glass flex-column justify-between">
+            <div>
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-palette"></i> Círculo Cromático Interativo</h3>
+              </div>
+              <div class="card-body">
+                <!-- Color Wheel Wrapper -->
+                <div class="color-wheel-wrapper">
+                  <div class="wheel-pointer-container">
+                    <canvas id="color-wheel" width="160" height="160"></canvas>
+                    <div class="wheel-pointer" id="wheel-pointer"></div>
+                  </div>
+                  
+                  <div class="harmony-selector-box">
+                    <label for="harmony-mode">Modo de Harmonia</label>
+                    <select id="harmony-mode" class="w-full">
+                      <option value="complementary" selected>Complementar (Destaque & Contraste)</option>
+                      <option value="analogous">Análoga (Fluidez & Elegância)</option>
+                      <option value="triadic">Tríade (Dinâmico & Moderno)</option>
+                      <option value="monochromatic">Monocromático (Sofisticado Clássico)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Palette Display -->
+                <div class="palette-display">
+                  <label>Paleta de Cores do Ensaio / Make</label>
+                  <div class="palette-swatches" id="palette-swatches">
+                    <!-- 5 dynamic swatches -->
+                    <div class="swatch" style="background-color: #d6a29a;" title="Cor Base"></div>
+                    <div class="swatch" style="background-color: #efebe6;"></div>
+                    <div class="swatch" style="background-color: #fbf9f6;"></div>
+                    <div class="swatch" style="background-color: #8c736f;"></div>
+                    <div class="swatch" style="background-color: #1c1c1c;"></div>
+                  </div>
+                  <div class="hex-codes" id="hex-codes">
+                    <span>#d6a29a</span>
+                    <span>#efebe6</span>
+                    <span>#fbf9f6</span>
+                    <span>#8c736f</span>
+                    <span>#1c1c1c</span>
+                  </div>
+                </div>
+
+                <!-- Colorimetric Analyzer -->
+                <div class="ai-inspiration-box" id="colorimetry-box">
+                  <div class="ai-box-header flex-row justify-between align-center" style="margin-bottom: 12px;">
+                    <h5><i class="fa-solid fa-circle-half-stroke"></i> Escaneador Cutâneo Digital</h5>
+                    <button type="button" class="btn-primary" id="btn-run-colorimetry" style="padding: 6px 14px; font-size: 11px; font-weight: 600; border-radius: 4px;" disabled>
+                      <i class="fa-solid fa-wand-magic-sparkles"></i> Analisar Pele
+                    </button>
+                  </div>
+                  
+                  <div class="ai-image-wrapper" id="colorimetry-wrapper" style="height: auto; min-height: 140px; padding: 20px; display: flex; align-items: center; justify-content: center;">
+                    <!-- Default Placeholder -->
+                    <div class="ai-loader" id="colorimetry-loader" style="position: static; display: flex; flex-direction: column; align-items: center; text-align: center; color: var(--text-muted);">
+                      <i class="fa-solid fa-camera-retro" style="font-size: 24px; color: var(--rose-primary); margin-bottom: 8px;"></i>
+                      <p style="max-width: 220px; font-size: 11px; line-height: 1.5; color: var(--text-secondary);">Faça upload da foto ao lado para habilitar o mapeamento de cromatologia e subtom de pele.</p>
+                    </div>
+                    
+                    <!-- Colorimetry Scan Results (Hidden initially) -->
+                    <div id="colorimetry-results-ui" style="display: none; width: 100%; text-align: left; padding: 4px 0;">
+                      <div class="technical-table" style="margin-top: 0; padding-top: 0; border-top: none; gap: 8px;">
+                        <div class="tech-row">
+                          <span class="tech-label">Subtom Cutâneo</span>
+                          <span class="tech-value rose-text" id="color-skin-undertone" style="font-weight: 700;">--</span>
+                        </div>
+                        <div class="tech-row">
+                          <span class="tech-label">Cartela Sazonal</span>
+                          <span class="tech-value rose-text" id="color-seasonal-palette" style="font-weight: 700;">--</span>
+                        </div>
+                        <div class="tech-row">
+                          <span class="tech-label">Balanço de Branco</span>
+                          <span class="tech-value" id="color-white-balance" style="font-family: monospace; font-size: 12px;">--</span>
+                        </div>
+                        <div class="tech-row">
+                          <span class="tech-label">Luminância Relativa</span>
+                          <span class="tech-value" id="color-luminance-ratio" style="font-family: monospace; font-size: 12px;">--</span>
+                        </div>
+                      </div>
+                      
+                      <!-- Toggle Visual Correction -->
+                      <div style="margin-top: 14px; text-align: center;">
+                        <button type="button" class="btn-secondary" id="btn-toggle-wb" style="padding: 8px 12px; font-size: 11px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 4px;">
+                          <i class="fa-solid fa-sliders"></i> Alternar Balanço de Branco
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Best Color Palette Swatches -->
+                  <div class="palette-display" id="colorimetry-swatches-display" style="display: none; margin-top: 16px; margin-bottom: 0; padding: 14px; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px;">
+                    <label style="font-size: 10px; margin-bottom: 8px; display: block; letter-spacing: 1px;">Cartela de Cores Recomendada:</label>
+                    <div class="palette-swatches" id="colorimetry-swatches-grid" style="height: 38px; gap: 4px; border: none; margin-top: 4px; margin-bottom: 4px;">
+                      <!-- 8 swatches injected here -->
+                    </div>
+                    <div id="colorimetry-season-desc" style="font-size: 11px; color: var(--text-secondary); margin-top: 10px; line-height: 1.4; font-style: italic;">
+                      Carregando recomendações...
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 3: Portrait & Beauty Lighting -->
+      <section id="lighting-tab" class="tab-pane">
+        <div class="pane-header">
+          <h2 class="pane-title">Referências de Iluminação de Beleza e Retrato</h2>
+          <p class="pane-description">Esquemas técnicos de luz de estúdio para fotografia de maquiagem. Escolha a direção de luz ideal para valorizar a produção.</p>
+        </div>
+
+        <div class="grid-2-1">
+          <!-- Setup Details -->
+          <div class="card glass flex-column justify-between">
+            <div>
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-sliders"></i> Esquema & Direção de Luz</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="lighting-selector">Estilo de Luz Recomendado</label>
+                  <select id="lighting-selector" class="w-full">
+                    <!-- Populated in app.js -->
+                  </select>
+                </div>
+
+                <div class="lighting-detail-box" id="lighting-detail-card">
+                  <h4 id="light-name" class="rose-text">Rembrandt de Beleza</h4>
+                  <p id="light-desc" class="package-desc">Clássico triângulo de luz...</p>
+                  
+                  <div class="technical-table">
+                    <div class="tech-row">
+                      <span class="tech-label">Luz Principal (Key Light)</span>
+                      <span class="tech-value" id="light-key">Octabox 90cm a 45º</span>
+                    </div>
+                    <div class="tech-row">
+                      <span class="tech-label">Preenchimento (Fill)</span>
+                      <span class="tech-value" id="light-fill">Placa Refratora Nude</span>
+                    </div>
+                    <div class="tech-row">
+                      <span class="tech-label">Efeito Fisiológico</span>
+                      <span class="tech-value" id="light-ratio">Dramatismo Sofisticado</span>
+                    </div>
+                    <div class="tech-row">
+                      <span class="tech-label">Foco de Visagismo</span>
+                      <span class="tech-value" id="light-mode">Acentuar Maçãs & Olhar</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card-footer">
+              <button type="button" class="btn-primary w-full" id="btn-save-lighting">
+                <i class="fa-solid fa-check"></i> Vincular ao Briefing da Cliente
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive SVG Lighting Placement Diagram -->
+          <div class="card glass">
+            <div class="card-header flex-row justify-between align-center">
+              <h3 class="card-title"><i class="fa-solid fa-circle-nodes"></i> Diagrama Técnico Tridimensional de Estúdio</h3>
+              <span class="diagram-scale">Câmera F/1.8</span>
+            </div>
+            <div class="card-body flex-center relative-container">
+              <div class="svg-diagram-wrapper" id="svg-diagram-container">
+                <!-- SVG injected dynamically in app.js -->
+              </div>
+              
+              <!-- Diagram Compass Overlay -->
+              <div class="diagram-compass">
+                <span>0º (Eixo da Cliente)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 4: Premium Exporter -->
+      <section id="export-tab" class="tab-pane">
+        <div class="pane-header">
+          <h2 class="pane-title">Central de Briefing Premium</h2>
+          <p class="pane-description">Compile todos os dados capturados da cliente — Cadastro, Contrato do Pacote, Análise Visagista, Paleta Cromática e Iluminação — em um briefing unificado.</p>
+        </div>
+
+        <div class="grid-1-2">
+          <!-- Exporter Actions -->
+          <div class="card glass flex-column justify-between">
+            <div>
+              <div class="card-header">
+                <h3 class="card-title"><i class="fa-solid fa-floppy-disk"></i> Empacotador de Briefing</h3>
+              </div>
+              <div class="card-body flex-column gap-md">
+                <p class="export-note">
+                  O Briefing da Cliente é exportado como uma **Single-Page HTML autônoma**, estilizada com a identidade visual Nude Rose luxo oficial de <strong>Anna Souza Beauty Experience</strong>.
+                </p>
+                <div class="warning-box">
+                  <i class="fa-solid fa-circle-info warning-icon"></i>
+                  <p>O arquivo compilado funcionará offline em qualquer dispositivo do cliente, sem necessidade de internet, reunindo todas as especificações.</p>
+                </div>
+                
+                <div class="briefing-checklist">
+                  <h5>Módulos Ativados para Exportação:</h5>
+                  <ul class="checklist-items">
+                    <li id="chk-client"><i class="fa-solid fa-xmark text-danger"></i> Ficha Cadastral</li>
+                    <li id="chk-contract"><i class="fa-solid fa-xmark text-danger"></i> Contrato de Serviço</li>
+                    <li id="chk-visagism"><i class="fa-solid fa-xmark text-danger"></i> Análise Visagista</li>
+                    <li id="chk-palette"><i class="fa-solid fa-xmark text-danger"></i> Paleta & Cromatologia</li>
+                    <li id="chk-lighting"><i class="fa-solid fa-xmark text-danger"></i> Direção de Luz</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card-footer flex-column gap-sm">
+              <button type="button" class="btn-primary w-full" id="btn-export-html">
+                <i class="fa-solid fa-file-arrow-down"></i> Exportar Briefing Anna Souza (HTML)
+              </button>
+              <button type="button" class="btn-secondary w-full" id="btn-print-contract">
+                <i class="fa-solid fa-print"></i> Imprimir Apenas Contrato
+              </button>
+            </div>
+          </div>
+
+          <!-- Preview Area -->
+          <div class="card glass flex-column">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fa-solid fa-magnifying-glass"></i> Visualização em Tempo Real (Atmosfera Editorial)</h3>
+            </div>
+            <div class="card-body flex-grow overflow-auto p-none relative-container">
+              <div class="preview-iframe-wrapper">
+                <div class="iframe-placeholder" id="iframe-placeholder">
+                  <i class="fa-solid fa-eye-slash placeholder-icon"></i>
+                  <p>Preencha os dados contratuais and selecione as especificações para gerar a visualização live aqui</p>
+                </div>
+                <div id="briefing-live-preview" class="briefing-preview-container hidden-preview">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Fullscreen Modal for Contract Printing / Viewing -->
+  <div class="modal-overlay" id="contract-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="rose-text"><i class="fa-solid fa-file-contract"></i> Instrumento Contratual Gerado</h3>
+        <button class="btn-close" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body printable-area" id="contract-print-body">
+        <!-- Rendered in JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-modal-print"><i class="fa-solid fa-print"></i> Imprimir Contrato</button>
+        <button class="btn-primary" id="btn-modal-accept"><i class="fa-solid fa-check"></i> Aceitar e Vincular ao Briefing</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
