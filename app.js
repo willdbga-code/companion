@@ -1888,9 +1888,9 @@ document.addEventListener("DOMContentLoaded", () => {
           <tr><td style="font-weight:600; color:#555;">CARTELA ESTAÇÃO:</td><td><strong>${col.season}</strong></td></tr>
         </table>
         ${col.isAnalyzed ? `
-        <div style="display:flex; align-items:center; margin-bottom:10px;">
-          <span style="font-size:11px; font-weight:600; color:#555; margin-right:15px;">CARTELA RECOMENDADA:</span>
-          <div style="display:flex;">${seasonSwatchesHtml}</div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; margin-bottom:10px; gap:8px;">
+          <span style="font-size:11px; font-weight:600; color:#555; margin-right:8px;">CARTELA RECOMENDADA:</span>
+          <div style="display:flex; flex-wrap:wrap; gap:4px;">${seasonSwatchesHtml}</div>
         </div>
         <p style="font-size:11px; color:#555; line-height:1.4; font-style:italic;">"${seasonDescriptions[col.season]}"</p>
         ` : '<p style="font-size:11px; color:#888; font-style:italic;">Escaneador cutâneo pendente.</p>'}
@@ -1898,7 +1898,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       <div style="margin-bottom:25px;">
         <h4 style="font-family:'Cinzel', serif; font-size:13px; color:#1c1c1c; border-bottom:1px solid #ddd; padding-bottom:5px; text-transform:uppercase; margin-bottom:12px;">4. Paleta de Harmonia Escolhida</h4>
-        <div style="display:flex; gap:6px; margin-bottom:10px;">
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
           ${paletteSwatchesHtml}
         </div>
         <div style="display:flex; justify-content:space-between; font-family:monospace; font-size:10px; color:#666; padding:0 5px;">
@@ -2074,6 +2074,46 @@ document.addEventListener("DOMContentLoaded", () => {
       font-size: 11px;
       color: #888;
     }
+    @media (max-width: 600px) {
+      body {
+        padding: 20px 10px;
+      }
+      .container {
+        padding: 25px 15px;
+        border-radius: 14px;
+      }
+      .header h1 {
+        font-size: 20px;
+      }
+      td {
+        display: block;
+        width: 100% !important;
+        padding: 4px 0;
+      }
+      td.label {
+        font-weight: 700;
+        color: var(--rose-dark);
+        margin-top: 6px;
+      }
+      .palette-wrapper {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .color-box {
+        min-width: 45px;
+        height: 45px !important;
+      }
+      .hex-codes {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        font-size: 9.5px;
+      }
+      .season-swatches-container {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+    }
     @media print {
       body { background-color: #fff; padding: 0; }
       .container { border: none; box-shadow: none; padding: 0; }
@@ -2123,9 +2163,9 @@ document.addEventListener("DOMContentLoaded", () => {
         <tr><td class="label">CARTELA ESTAÇÃO:</td><td><strong>${col.season}</strong></td></tr>
       </table>
       ${col.isAnalyzed ? `
-      <div style="display:flex; align-items:center; margin-bottom:15px; margin-top: 10px;">
-        <span style="font-size:12px; font-weight:600; color:#555; margin-right:15px;">PALETA RECOMENDADA:</span>
-        <div style="display:flex;">${seasonSwatchesHtml}</div>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; margin-bottom:15px; margin-top: 10px; gap:8px;">
+        <span style="font-size:12px; font-weight:600; color:#555; margin-right:8px;">PALETA RECOMENDADA:</span>
+        <div style="display:flex; flex-wrap:wrap; gap:4px;" class="season-swatches-container">${seasonSwatchesHtml}</div>
       </div>
       <div class="desc-box" style="font-style: italic;">
         "${seasonDescriptions[col.season]}"
@@ -2135,7 +2175,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <div class="card-info">
       <h3 class="section-title">4. Paleta de Harmonia Cromática (Moodboard)</h3>
-      <div class="palette-wrapper">
+      <div class="palette-wrapper" style="display:flex; flex-wrap:wrap; gap:6px;">
         ${paletteSwatchesHtml}
       </div>
       <div class="hex-codes">
